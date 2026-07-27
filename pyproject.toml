@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "guiserver"
+version = "0.1.1"
+description = "A GUI file/folder browser server, like http server but with a nice web UI"
+requires-python = ">=3.8"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Krishnendu Bhowmick" }
+]
+keywords = ["http.server", "file server", "gui", "cli", "static files", "directory listing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://github.com/bhowmickkrishnendu/guiserver"
+Repository = "https://github.com/bhowmickkrishnendu/guiserver"
+Issues = "https://github.com/bhowmickkrishnendu/guiserver/issues"
+
+[project.scripts]
+guiserver = "guiserver.__main__:main"
+
+[tool.setuptools]
+packages = ["guiserver"]

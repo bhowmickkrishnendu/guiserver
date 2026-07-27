@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.10", "3.12"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: pip install .
+
+      - name: Smoke test - server starts and serves a directory listing
+        run: |
+          mkdir -p /tmp/servetest
+          echo "hello" > /tmp/servetest/hello.txt
+          guiserver 8123 --directory /tmp/servetest --bind 127.0.0.1 &
+          SERVER_PID=$!
+          sleep 2
+          curl -sf http://127.0.0.1:8123/ | grep -q "hello.txt"
+          curl -sf -o /dev/null http://127.0.0.1:8123/hello.txt
+          kill $SERVER_PID
