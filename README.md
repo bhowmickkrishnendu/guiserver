@@ -33,11 +33,12 @@ MIME type handling, etc. all work exactly the way they do in `http.server`.
 ## Features
 
 - 🎨 Dark-themed, responsive GUI file/folder browser
+- 🌓 System / dark / light theme switcher
 - 🔍 Instant client-side search/filter box
 - 📁 Folders sorted first, then files, alphabetically
 - 📏 File size and last-modified date columns
 - ⬅️ Working parent-folder (`..`) navigation at any depth
-- ⬆️ Optional file uploads for the served directory
+- ⬆️ Optional file uploads hidden behind a right-aligned Upload button
 - ⚙️ Same CLI usage pattern as `python -m http.server`
 - 📦 Zero dependencies — pure Python standard library
 
@@ -78,10 +79,17 @@ guiserver 8080 --bind 127.0.0.1
 guiserver 8080 --upload
 ```
 
-When upload support is enabled, the UI shows a file picker and submits files
-with a regular browser form POST. Uploads are off by default, duplicate
-filenames are rejected with a conflict response, and files are written into
-the directory currently being browsed.
+When upload support is enabled, the UI shows a right-aligned Upload button that
+unfolds the upload panel. The chooser uses custom hover/click text instead of
+the browser's default file input button. Uploads are off by default, duplicate
+filenames are rejected with a styled conflict page, and files are written into
+the directory currently being browsed. Theme selection can be switched between
+system, light, and dark from the top-right controls.
+
+### Release Notes
+
+- `0.1.3`: tighter popup-style upload panel, compact theme controls, and a
+	styled duplicate-file conflict page.
 
 Or run it as a module, without the console script:
 
