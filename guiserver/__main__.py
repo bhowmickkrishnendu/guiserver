@@ -16,10 +16,12 @@ def main():
                          help="Address to bind to (default: all interfaces)")
     parser.add_argument("--directory", "-d", default=os.getcwd(), metavar="DIR",
                          help="Directory to serve (default: current directory)")
+    parser.add_argument("--upload", action="store_true",
+                        help="Enable file uploads to the served directory")
     args = parser.parse_args()
 
     try:
-        run(port=args.port, bind=args.bind, directory=args.directory)
+        run(port=args.port, bind=args.bind, directory=args.directory, allow_uploads=args.upload)
     except OSError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

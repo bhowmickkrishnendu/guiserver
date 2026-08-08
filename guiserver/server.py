@@ -9,9 +9,11 @@ is handled exactly like the standard library's http.server, we only override
 how a *directory* is rendered.
 """
 
+import cgi
 import html
 import io
 import os
+import shutil
 import urllib.parse
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -42,6 +44,7 @@ class GuiHTTPRequestHandler(SimpleHTTPRequestHandler):
     """SimpleHTTPRequestHandler with a styled, searchable directory index."""
 
     server_version = "GuiHTTPServer/0.1"
+    upload_enabled = False
 
     def list_directory(self, path):
         try:
@@ -94,6 +97,7 @@ class GuiHTTPRequestHandler(SimpleHTTPRequestHandler):
 
         body = PAGE_TEMPLATE.format(
             path=display_path,
+            upload_section=self._upload_section() if self.upload_enabled else "",
             rows="\n".join(rows) if rows else '<tr><td colspan="4" class="empty">This folder is empty</td></tr>',
             count=len(dirs) + len(files),
         )
@@ -105,6 +109,69 @@ class GuiHTTPRequestHandler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         return f
+
+    def do_POST(self):
+        if not self.upload_enabled:
+            self.send_error(HTTPStatus.FORBIDDEN, "Uploads are disabled")
+            return
+
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type:
+            self.send_error(HTTPStatus.BAD_REQUEST, "Expected multipart form upload")
+            return
+
+        form = cgi.FieldStorage(
+            fp=self.rfile,
+            headers=self.headers,
+            environ={
+                "REQUEST_METHOD": "POST",
+                "CONTENT_TYPE": content_type,
+            },
+        )
+
+        if "file" not in form:
+            self.send_error(HTTPStatus.BAD_REQUEST, "No file selected")
+            return
+
+        field = form["file"]
+        filename = os.path.basename(getattr(field, "filename", "") or "")
+        if not filename or filename in {".", ".."}:
+            self.send_error(HTTPStatus.BAD_REQUEST, "Invalid filename")
+            return
+
+        target_dir = self.translate_path(urllib.parse.urlparse(self.path).path)
+        if not os.path.isdir(target_dir):
+            self.send_error(HTTPStatus.BAD_REQUEST, "Uploads must target a directory")
+            return
+
+        target_path = os.path.join(target_dir, filename)
+        if os.path.exists(target_path):
+            self.send_error(HTTPStatus.CONFLICT, f"File already exists: {filename}")
+            return
+
+        with open(target_path, "wb") as output_file:
+            shutil.copyfileobj(field.file, output_file)
+
+        redirect_target = self.path.split("?", 1)[0].split("#", 1)[0] or "/"
+        self.send_response(HTTPStatus.SEE_OTHER)
+        self.send_header("Location", redirect_target)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    @staticmethod
+    def _upload_section():
+        return """
+  <section class="upload-panel">
+    <form class="upload-form" method="post" enctype="multipart/form-data">
+      <label class="upload-label" for="upload-file">
+        <span>Upload a file</span>
+        <input id="upload-file" name="file" type="file" required>
+      </label>
+      <button type="submit">Upload</button>
+    </form>
+    <p class="upload-note">Uploads are enabled for this server. Duplicate filenames are rejected.</p>
+  </section>
+"""
 
     @staticmethod
     def _row(name, link, is_dir, size, mtime, is_parent=False):
@@ -152,6 +219,26 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
     padding: 8px 12px; border-radius: 8px; font-size: 14px; width: 220px; outline: none;
   }}
   #search:focus {{ border-color: var(--accent); }}
+  .upload-panel {{
+    margin: 20px 32px 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px;
+    background: linear-gradient(180deg, rgba(108, 140, 255, 0.08), rgba(108, 140, 255, 0.02));
+  }}
+  .upload-form {{
+    display: flex; gap: 12px; align-items: end; flex-wrap: wrap;
+  }}
+  .upload-label {{
+    display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 13px;
+  }}
+  .upload-label input {{
+    color: var(--text); background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px; min-width: min(100%, 320px);
+  }}
+  .upload-form button {{
+    background: var(--accent); color: white; border: 0; border-radius: 8px;
+    padding: 9px 16px; font-size: 14px; cursor: pointer;
+  }}
+  .upload-form button:hover {{ filter: brightness(1.05); }}
+  .upload-note {{ margin: 10px 0 0; color: var(--muted); font-size: 12px; }}
   main {{ padding: 16px 32px 48px; }}
   table {{ width: 100%; border-collapse: collapse; }}
   th {{
@@ -175,6 +262,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   <h1>📂 <span class="muted">Index of</span> {path}</h1>
   <input id="search" type="text" placeholder="Filter files & folders..." autocomplete="off">
 </header>
+{upload_section}
 <main>
   <table id="listing">
     <thead>
@@ -203,10 +291,12 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 """
 
 
-def run(port=8000, bind="", directory=None):
+def run(port=8000, bind="", directory=None, allow_uploads=False):
     directory = directory or os.getcwd()
 
     class Handler(GuiHTTPRequestHandler):
+        upload_enabled = allow_uploads
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=directory, **kwargs)
 

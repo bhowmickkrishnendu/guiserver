@@ -37,6 +37,7 @@ MIME type handling, etc. all work exactly the way they do in `http.server`.
 - 📁 Folders sorted first, then files, alphabetically
 - 📏 File size and last-modified date columns
 - ⬅️ Working parent-folder (`..`) navigation at any depth
+- ⬆️ Optional file uploads for the served directory
 - ⚙️ Same CLI usage pattern as `python -m http.server`
 - 📦 Zero dependencies — pure Python standard library
 
@@ -72,7 +73,15 @@ guiserver 8080 --directory "/path/to/folder"
 
 # Bind to localhost only (not accessible on your network)
 guiserver 8080 --bind 127.0.0.1
+
+# Enable uploads to the served directory
+guiserver 8080 --upload
 ```
+
+When upload support is enabled, the UI shows a file picker and submits files
+with a regular browser form POST. Uploads are off by default, duplicate
+filenames are rejected with a conflict response, and files are written into
+the directory currently being browsed.
 
 Or run it as a module, without the console script:
 
