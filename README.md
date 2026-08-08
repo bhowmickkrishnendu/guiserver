@@ -84,12 +84,12 @@ python -m guiserver 8080
 
 Bug reports, feature requests, and pull requests are all welcome — this is a
 small project built for anyone to use and improve. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on filing issues and
+[CONTRIBUTING.md](https://github.com/bhowmickkrishnendu/guiserver?tab=contributing-ov-file) for guidelines on filing issues and
 submitting PRs.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Use it, fork it, ship it.
+MIT — see [LICENSE](https://github.com/bhowmickkrishnendu/guiserver?tab=MIT-1-ov-file). Use it, fork it, ship it.
 
 ---
 
