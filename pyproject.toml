@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guiserver"
-version = "0.1.1"
+version = "0.1.2"
 description = "A GUI file/folder browser server, like http server but with a nice web UI"
 requires-python = ">=3.8"
 readme = "README.md"
